@@ -1,0 +1,173 @@
+---
+title: "02-dplyr数据操作包"
+author: "邓旭东"
+date: "2020-7-17"
+output: 
+    html_document:
+        toc: true # table of content true
+        toc_float: True
+        collapsed: TRUE
+        toc_depth: 3  
+        number_sections: yes
+        smooth_scroll: T 
+        theme: readable  
+        highlight: pygments  
+        df_print: paged 
+        keep_md: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, error = FALSE)
+```
+
+
+
+# dplyr简介
+dplyr是R语言的数据分析包，类似于python中的pandas，能对dataframe类型的数据做很方便的数据处理和分析操作。最初我也很奇怪dplyr这个奇怪的名字，我查到其中一种解释
+
+- d代表dataframe
+- plyr是英文钳子plier的谐音
+
+
+
+```{r}
+library(tidyverse)
+tidyverse::tidyverse_packages()
+```
+
+
+
+
+# 读取数据
+tidyverse含有readr，所以不用导入readr
+
+```{r}
+#用readr包导入csv数据
+aapl <- readr::read_csv('data/aapl.csv') 
+aapl
+```
+
+# 查看数据基本信息
+这里使用的是R语言的基本函数，不用导入包就可以使用
+
+## 数据类型
+
+```{r}
+class(aapl)
+```
+
+## 字段
+```{r}
+colnames(aapl)
+```
+
+## 记录数、字段数
+```{r}
+dim(aapl)
+```
+
+## 前10条记录
+```{r}
+head(aapl)
+```
+
+# 查看dplyr用例
+```{r}
+vignette("dplyr")
+```
+
+
+# dplyr常用函数
+
+
+## Arrange
+对appl数据按照字段Volume进行降序排序。为了写作方便，我就不再写完整的调用，在这里arrange()代替 dplyr::arrange()
+```{r}
+library(dplyr)
+#dplyr::arrange(aapl, -Volume)
+arrange(aapl, -Volume)
+```
+
+## 管道符 %>% 
+在dplyr中，有一个管道符%>%，符号左侧表示数据的输入，右侧表示下游数据处理环节。
+
+我们可以用管道符 %>% 改写上面的代码，两种写法得到的运行结果是一致的，用久了会觉得管道符 %>% 可读性更强，后面我们都会用 %>% 来写代码。
+
+```{r}
+aapl %>% arrange(-Volume)
+```
+## Select
+
+选取 Date、Close和Volume三列
+```{r}
+aapl %>% select(Date, Close, Volume)
+```
+
+只选取Date、Close和Volume三列，其实另外一种表达方式是“排除Open、High、Low，选择剩下的字段的数据”。
+
+```{r}
+aapl %>% select(-c("Open", "High", "Low"))
+```
+
+
+## Filter
+按照筛选条件选择数据
+
+```{r}
+#从数据中选择appl股价大于150美元的交易数据
+aapl %>% filter(Close>=150)
+```
+
+从数据中选择appl
+- 股价大于150美元 且 收盘价大于开盘价  
+的交易数据
+
+```{r}
+aapl %>% filter((Close>=150) & (Close>Open))
+```
+
+## Mutate
+将现有的字段经过计算后生成新字段。
+
+
+
+```{r}
+#将最好价High减去最低价Low的结果定义为maxDif，并取log
+aapl %>% mutate(maxDif = High-Low,
+                log_maxDif=log(maxDif))
+
+```
+
+得到记录的位置(行数)
+```{r}
+aapl  %>% mutate(n=row_number())
+```
+
+
+## Group_By
+对资料进行分组，这里导入新的 数据集 weather
+
+```{r}
+#导入csv数据
+weather <- readr::read_csv('data/weather.csv') %>% as_tibble()
+weather
+```
+按照城市分组
+
+```{r}
+weather %>% group_by(city)
+```
+为了让大家看到分组的功效，咱们按照城市分别计算平均温度
+
+```{r}
+weather %>% 
+    group_by(city) %>% 
+    summarise(mean_temperature = mean(temperature))
+```
+```{r}
+weather %>%  
+    summarise(mean_temperature = mean(temperature))
+```
+
+
+
